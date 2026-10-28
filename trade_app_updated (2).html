@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRADE.</title>
+<style>
+:root {
+  --bg:#080d18; --panel:#111a2b; --panel2:#19253a;
+  --text:#f4f7ff; --muted:#95a3b8; --border:#29364d;
+  --green:#16c784; --red:#ea3943; --blue:#4778ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+body.light{--bg:#f1f5fb;--panel:#fff;--panel2:#e8eef7;--text:#142033;--muted:#627087;--border:#d4dce8}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.app{max-width:1050px;margin:auto;padding:17px 15px 100px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:25px}
+.logo{font-size:28px;font-weight:900}
+.logo span{color:var(--green)}
+.coin-pill,.small-btn{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text)}
+.coin-pill{color:#facc15;font-weight:bold}
+.page{display:none}.page.active{display:block}
+h1{font-size:27px;margin:0 0 8px}
+h2{font-size:18px;margin:0 0 15px}
+.subtitle,.muted{color:var(--muted)}
+.subtitle{line-height:1.5;margin:0 0 22px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.stat-label{font-size:13px;color:var(--muted);margin-bottom:9px}
+.stat-value{font-size:23px;font-weight:800;overflow-wrap:anywhere}
+.green{color:var(--green)}.red{color:var(--red)}
+.market-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.price{font-size:29px;font-weight:800;margin:7px 0}
+.live{color:var(--green);font-size:12px;font-weight:bold}
+.chart-wrap{width:100%;height:240px}
+canvas{width:100%;height:100%;display:block}
+.amount-title{font-weight:bold;margin:18px 0 10px}
+.amounts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.amount-btn{padding:12px 3px;border-radius:9px;color:var(--text);background:var(--panel2);border:1px solid var(--border);font-weight:bold}
+.amount-btn.selected{background:#24437e;border-color:var(--blue);color:white}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.buy,.sell,.primary{border:0;border-radius:10px;padding:14px;font-weight:bold}
+.buy{background:var(--green);color:#07130e}
+.sell{background:var(--red);color:white}
+.primary{background:var(--blue);color:white;width:100%}
+.input,.setting-select{width:100%;padding:13px;margin:10px 0 15px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px}
+label{display:block;color:var(--muted);font-size:13px}
+.wallet-balance{font-size:32px;font-weight:900;margin:10px 0;overflow-wrap:anywhere}
+.notice{color:var(--muted);font-size:12px;line-height:1.6;margin-top:13px}
+.reward-box{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px 0}
+.reward-box strong{font-size:19px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:0}
+.deposit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.deposit-option{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:12px;padding:16px;text-align:left;transition:border-color .2s,transform .2s}
+.deposit-option:hover{border-color:var(--blue);transform:translateY(-1px)}
+.deposit-option strong{display:block;font-size:20px;margin-bottom:6px}
+.deposit-option span{color:var(--muted);font-size:13px}
+.bottom-nav{position:fixed;z-index:5;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:3px;flex-wrap:wrap;padding:9px 4px;background:var(--panel);border-top:1px solid var(--border)}
+.nav-btn{border:0;background:transparent;color:var(--muted);padding:10px 12px;border-radius:9px;font-size:12px;font-weight:bold}
+.nav-btn.active{background:var(--panel2);color:var(--text)}
+.toast{display:none;position:fixed;top:15px;left:50%;transform:translateX(-50%);z-index:10;background:var(--panel2);border:1px solid var(--border);padding:13px 17px;border-radius:10px;max-width:90%}
+@media(max-width:600px){
+.grid{grid-template-columns:1fr}.grid .panel{margin-bottom:0}.grid{margin-bottom:16px}
+.chart-wrap{height:210px}.nav-btn{padding:10px 8px;font-size:11px}
+.app{padding-left:12px;padding-right:12px}
+.deposit-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="app">
+<header>
+  <div class="logo">TRADE<span>.</span></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="coin-pill">🪙 <span id="headerCoins">0</span></div>
+    <button class="small-btn" onclick="toggleTheme()" id="themeBtn" aria-label="Switch theme">☀️</button>
+  </div>
+</header>
+
+<section class="page active" id="home">
+  <h1>Welcome to TRADE.</h1>
+  <p class="subtitle">Practice trading using virtual coins.</p>
+  <div class="grid">
+    <div class="panel"><div class="stat-label">YOUR COINS</div><div class="stat-value" id="homeCoins">0</div></div>
+    <div class="panel"><div class="stat-label">OPEN TRADES</div><div class="stat-value" id="openTrades">0</div></div>
+    <div class="panel"><div class="stat-label">DEMO PROFIT / LOSS</div><div class="stat-value green" id="profitLoss">0</div></div>
+  </div>
+  <div class="panel">
+    <div class="market-top">
+      <div><h2>Market Overview</h2><div class="price" id="homePrice">100,000.00</div><div id="homeChange" class="green">+0.00%</div></div>
+      <span class="live">● SIMULATED</span>
+    </div>
+    <div class="chart-wrap"><canvas id="homeChart" aria-label="Market overview chart"></canvas></div>
+    <button class="primary" onclick="showPage('market')">Open Market →</button>
+  </div>
+  <div class="panel">
+    <h2>Market Watch</h2>
+    <div class="row"><div><b>BTC / USD</b><div class="muted">Bitcoin demo price</div></div><div style="text-align:right"><b id="btcPrice">100,000.00</b><div id="btcChange" class="green">+0.00%</div></div></div>
+    <div class="row"><div><b>ETH / USD</b><div class="muted">Ethereum demo price</div></div><div style="text-align:right"><b id="ethPrice">3,000.00</b><div id="ethChange" class="green">+0.00%</div></div></div>
+    <div class="row"><div><b>GOLD / USD</b><div class="muted">Gold demo price</div></div><div style="text-align:right"><b id="goldPrice">2,500.00</b><div id="goldChange" class="green">+0.00%</div></div></div>
+  </div>
+</section>
+
+<section class="page" id="market">
+  <h1>Market</h1><p class="subtitle">Choose an amount to make a demo trade.</p>
+  <div class="panel">
+    <div class="market-top">
+      <div><div class="muted">BTC / USD</div><div class="price" id="marketPrice">100,000.00</div><div id="marketChange" class="green">+0.00%</div></div>
+      <span class="live">● CHART MOVING</span>
+    </div>
+    <div class="chart-wrap"><canvas id="marketChart" aria-label="Bitcoin market chart"></canvas></div>
+    <div class="amount-title">Choose an amount</div>
+    <div class="amounts">
+      <button class="amount-btn selected" data-amount="10000" onclick="selectAmount(10000)">10K</button>
+      <button class="amount-btn" data-amount="50000" onclick="selectAmount(50000)">50K</button>
+      <button class="amount-btn" data-amount="100000" onclick="selectAmount(100000)">100K</button>
+      <button class="amount-btn" data-amount="1000000" onclick="selectAmount(1000000)">1M</button>
+    </div>
+    <div class="stat-label">Selected: <b id="selectedAmount">10,000 coins</b></div>
+    <div class="stat-label">Balance: <b id="marketBalance">0 coins</b></div>
+    <div class="actions">
+      <button class="buy" onclick="makeTrade('BUY')">BUY ▲</button>
+      <button class="sell" onclick="makeTrade('SELL')">SELL ▼</button>
+    </div>
+    <p class="notice">Prices are simulated. No real trading or investment occurs.</p>
+  </div>
+  <div class="panel">
+    <h2>Your Open Trades</h2>
+    <button class="sell" style="width:100%;margin-bottom:12px" onclick="closeAllTrades()">Close All Trades</button>
+    <div id="tradeList" class="muted">No open trades.</div>
+  </div>
+</section>
+
+<section class="page" id="wallet">
+  <h1>Wallet</h1>
+  <p class="subtitle">Manage your coin balance and deposit requests.</p>
+  <div class="panel">
+    <div class="stat-label">YOUR COIN BALANCE</div>
+    <div class="wallet-balance">🪙 <span id="walletCoins">0</span></div>
+    <div class="reward-box">
+      <div class="stat-label">ESTIMATED CASH VALUE</div>
+      <div class="wallet-balance">C$<span id="cashValue">0.00</span></div>
+      <p class="muted">Displayed estimate only. This is not a cash balance.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Deposit Money</h2>
+    <p class="muted">Choose a coin package. Transfer/payment setup will be added later.</p>
+    <div class="deposit-grid">
+      <button class="deposit-option" onclick="startDeposit(100000,0.25)">
+        <strong>100K Coins</strong><span>C$0.25 · Deposit package</span>
+      </button>
+      <button class="deposit-option" onclick="startDeposit(1000000,2)">
+        <strong>1M Coins</strong><span>C$2.00 · Deposit package</span>
+      </button>
+    </div>
+    <p class="notice">Sandbox/payment processing is not connected yet. Selecting a package will not charge you or add coins.</p>
+    <div id="depositMessage" class="notice" role="status" aria-live="polite"></div>
+  </div>
+  <div class="panel">
+    <h2>PayPal Cash-out</h2>
+    <p class="muted">Enter your PayPal email and the number of coins to convert.</p>
+    <label for="paypalEmail">PayPal email</label>
+    <input class="input" id="paypalEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    <label for="cashoutCoins">Coins to cash out</label>
+    <input class="input" id="cashoutCoins" type="number" min="100000" step="100000" placeholder="Example: 100000">
+    <div class="reward-box">
+      <div class="stat-label">ESTIMATED CASH PAYOUT</div>
+      <div class="wallet-balance">C$<span id="requestedCash">0.00</span></div>
+      <p class="muted">100,000 coins = C$0.10 (display estimate)</p>
+    </div>
+    <button class="primary" onclick="requestCashout()">Request cash-out</button>
+    <p class="notice">This is a demo request saved in your browser. It does not send real money to PayPal.</p>
+  </div>
+  <div class="panel">
+    <h2>Cash-out Requests</h2>
+    <div id="cashoutHistory" class="muted">No requests yet.</div>
+  </div>
+</section>
+
+<section class="page" id="settings">
+  <h1>Settings</h1><p class="subtitle">TRADE. preferences.</p>
+  <div class="panel">
+    <h2>Appearance</h2>
+    <button class="primary" onclick="toggleTheme()">Switch Dark / Light Mode</button>
+  </div>
+  <div class="panel">
+    <h2>Chart Style</h2>
+    <p class="muted">Choose how market charts are displayed.</p>
+    <label for="chartType">Chart type</label>
+    <select class="setting-select" id="chartType" onchange="setChartType(this.value)">
+      <option value="line">Line chart</option>
+      <option value="candles">Candlestick chart</option>
+    </select>
+    <p class="notice">Your chart style is saved on this device and used on Home and Market.</p>
+  </div>
+  <div class="panel">
+    <h2>About</h2>
+    <p class="muted">TRADE. is a simulator. It does not use live prices, connect to a broker, or process payments.</p>
+    <button class="small-btn" onclick="resetApp()">Reset demo data</button>
+  </div>
+</section>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-page="home" onclick="showPage('home')">⌂ Home</button>
+  <button class="nav-btn" data-page="market" onclick="showPage('market')">↗ Market</button>
+  <button class="nav-btn" data-page="wallet" onclick="showPage('wallet')">◈ Wallet</button>
+  <button class="nav-btn" data-page="settings" onclick="showPage('settings')">⚙ Settings</button>
+</nav>
+
+<script>
+const KEY = "trade_demo_v2";
+const COINS_PER_DOLLAR = 1000000;
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e) {}
+
+let coins = Number.isFinite(state.coins) ? state.coins : 0;
+let trades = Array.isArray(state.trades) ? state.trades : [];
+let cashouts = Array.isArray(state.cashouts) ? state.cashouts : [];
+let profitLoss = Number.isFinite(state.profitLoss) ? state.profitLoss : 0;
+let light = state.light === true;
+let chartType = state.chartType === "candles" ? "candles" : "line";
+let selected = 10000;
+let btc = 100000, btcStart = 100000;
+let eth = 3000, ethStart = 3000;
+let gold = 2500, goldStart = 2500;
+let history = Array.isArray(state.history) && state.history.length > 1
+  ? state.history : Array.from({length:55},(_,i)=>100000+Math.sin(i/4)*350);
+let toastTimer;
+
+if(light) document.body.classList.add("light");
+document.getElementById("chartType").value = chartType;
+
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify({coins,trades,cashouts,profitLoss,light,chartType,history}));
+  }catch(e){}
+}
+function fmt(n){return Math.round(n).toLocaleString("en-CA");}
+function priceFmt(n){return Number(n).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pct(n,start){let p=(n-start)/start*100;return(p>=0?"+":"")+p.toFixed(2)+"%";}
+function cashValue(n){return Math.max(0,n)/COINS_PER_DOLLAR;}
+function toast(message){
+  let el=document.getElementById("toast");
+  el.textContent=message; el.style.display="block";
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.style.display="none",2800);
+}
+function startDeposit(amount, price){
+  const msg=document.getElementById("depositMessage");
+  msg.textContent="Selected: "+fmt(amount)+" coins for C$"+price.toFixed(2)+". Transfer/payment is not connected yet; no money was charged and no coins were added.";
+  toast("Deposit package selected. Payment is not connected yet.");
+}
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+  requestAnimationFrame(drawCharts);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function toggleTheme(){
+  light=!light;
+  document.body.classList.toggle("light",light);
+  document.getElementById("themeBtn").textContent=light?"🌙":"☀️";
+  save(); drawCharts();
+}
+function setChartType(type){
+  chartType=type==="candles"?"candles":"line";
+  save(); drawCharts();
+  toast(chartType==="candles"?"Candlestick chart selected.":"Line chart selected.");
+}
+function selectAmount(n){
+  selected=n;
+  document.querySelectorAll(".amount-btn").forEach(b=>b.classList.toggle("selected",Number(b.dataset.amount)===n));
+  document.getElementById("selectedAmount").textContent=fmt(n)+" coins";
+}
+function makeTrade(side){
+  if(coins<selected){toast("Not enough coins. Use Deposit Money when payment is connected.");return;}
+  coins-=selected;
+  trades.push({side,amount:selected,entry:btc});
+  update(); toast("Demo "+side+" trade opened!");
+}
+function tradePnl(t){
+  let direction=t.side==="BUY"?1:-1;
+  return Math.round(((btc-t.entry)/t.entry)*t.amount*direction);
+}
+function closeTrade(i){
+  let t=trades[i]; if(!t)return;
+  let pnl=tradePnl(t);
+  coins+=Math.max(0,t.amount+pnl); profitLoss+=pnl; trades.splice(i,1);
+  update(); toast("Trade closed. Demo P/L: "+(pnl>=0?"+":"")+fmt(pnl));
+}
+function closeAllTrades(){
+  if(!trades.length){toast("No open trades.");return;}
+  if(!confirm("Close all open demo trades?"))return;
+  let total=0;
+  trades.forEach(t=>{let pnl=tradePnl(t);total+=pnl;coins+=Math.max(0,t.amount+pnl);});
+  trades=[]; profitLoss+=total; update();
+  toast("All trades closed. Demo P/L: "+(total>=0?"+":"")+fmt(total));
+}
+function requestCashout(){
+  const email=document.getElementById("paypalEmail").value.trim();
+  const amount=Number(document.getElementById("cashoutCoins").value);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast("Enter a valid PayPal email.");return;}
+  if(!Number.isSafeInteger(amount)||amount<100000||amount%100000!==0){toast("Enter coins in increments of 100,000.");return;}
+  if(amount>coins){toast("You don't have enough coins.");return;}
+  const value=cashValue(amount);
+  if(!confirm("Request C$"+value.toFixed(2)+" for "+fmt(amount)+" coins?\n\nDemo request only. No real money will be sent."))return;
+  cashouts.unshift({email,amount,value,date:new Date().toLocaleString(),status:"Demo request — not paid"});
+  coins-=amount;
+  document.getElementById("cashoutCoins").value="";
+  document.getElementById("requestedCash").textContent="0.00";
+  update(); toast("Demo request saved. No PayPal payment was sent.");
+}
+document.getElementById("cashoutCoins").addEventListener("input",function(){
+  const amount=Number(this.value);
+  document.getElementById("requestedCash").textContent=Number.isFinite(amount)&&amount>0?cashValue(amount).toFixed(2):"0.00";
+});
+function addCashoutHistory(){
+  const el=document.getElementById("cashoutHistory"); el.innerHTML="";
+  if(!cashouts.length){el.textContent="No requests yet.";return;}
+  cashouts.forEach(r=>{
+    const div=document.createElement("div");div.className="row";
+    const left=document.createElement("div");
+    const email=document.createElement("b");email.textContent=r.email;
+    const date=document.createElement("div");date.className="muted";date.textContent=r.date;
+    left.append(email,date);
+    const right=document.createElement("div");right.style.textAlign="right";
+    const amount=document.createElement("b");amount.textContent="C$"+Number(r.value ?? cashValue(r.amount)).toFixed(2);
+    const status=document.createElement("div");status.className="muted";status.textContent=r.status;
+    right.append(amount,status);div.append(left,right);el.append(div);
+  });
+}
+function update(){
+  document.getElementById("headerCoins").textContent=fmt(coins);
+  document.getElementById("homeCoins").textContent=fmt(coins);
+  document.getElementById("walletCoins").textContent=fmt(coins);
+  document.getElementById("marketBalance").textContent=fmt(coins)+" coins";
+  document.getElementById("openTrades").textContent=trades.length;
+  const pl=document.getElementById("profitLoss");
+  pl.textContent=(profitLoss>0?"+":"")+fmt(profitLoss);
+  pl.className="stat-value "+(profitLoss>=0?"green":"red");
+  document.getElementById("homePrice").textContent=priceFmt(btc);
+  document.getElementById("marketPrice").textContent=priceFmt(btc);
+  document.getElementById("homeChange").textContent=pct(btc,btcStart);
+  document.getElementById("marketChange").textContent=pct(btc,btcStart);
+  document.getElementById("btcPrice").textContent=priceFmt(btc);
+  document.getElementById("btcChange").textContent=pct(btc,btcStart);
+  document.getElementById("ethPrice").textContent=priceFmt(eth);
+  document.getElementById("ethChange").textContent=pct(eth,ethStart);
+  document.getElementById("goldPrice").textContent=priceFmt(gold);
+  document.getElementById("goldChange").textContent=pct(gold,goldStart);
+  document.getElementById("themeBtn").textContent=light?"🌙":"☀️";
+  document.getElementById("cashValue").textContent=cashValue(coins).toFixed(2);
+  const list=document.getElementById("tradeList"); list.innerHTML="";
+  if(!trades.length)list.textContent="No open trades.";
+  trades.forEach((t,i)=>{
+    const row=document.createElement("div");row.className="row";
+    const info=document.createElement("div");
+    const side=document.createElement("b");side.textContent=t.side+" BTC";side.className=t.side==="BUY"?"green":"red";
+    const entry=document.createElement("div");entry.className="muted";entry.textContent="Entry: "+priceFmt(t.entry);
+    const pnl=document.createElement("div");pnl.className=tradePnl(t)>=0?"green":"red";
+    pnl.textContent="Demo P/L: "+(tradePnl(t)>=0?"+":"")+fmt(tradePnl(t))+" coins";
+    info.append(side,entry,pnl);
+    const right=document.createElement("div");right.style.textAlign="right";
+    const amount=document.createElement("b");amount.textContent=fmt(t.amount)+" coins";
+    const close=document.createElement("button");close.className="small-btn";close.textContent="Close";
+    close.style.display="block";close.style.marginTop="7px";close.onclick=()=>closeTrade(i);
+    right.append(amount,close);row.append(info,right);list.append(row);
+  });
+  addCashoutHistory(); save();
+}
+function resetApp(){
+  if(!confirm("Reset demo coins, trades, and cash-out requests?"))return;
+  coins=0;trades=[];cashouts=[];profitLoss=0;update();
+  toast("Demo data reset.");
+}
+
+/* Make approximate OHLC values from the stored simulated prices for candle display. */
+function getCandles(data){
+  return data.map((close,i)=>{
+    const previous=i===0?close-(data[1]-data[0]):data[i-1];
+    const open=previous;
+    const spread=Math.max(8,Math.abs(close-open)*0.8,close*0.00018);
+    return {open,close,high:Math.max(open,close)+spread*(0.45+(i%3)*0.12),
+      low:Math.min(open,close)-spread*(0.4+(i%4)*0.1)};
+  });
+}
+function drawChart(id,data){
+  const c=document.getElementById(id); if(!c)return;
+  const r=c.getBoundingClientRect(); if(r.width<1||r.height<1)return;
+  const dpr=window.devicePixelRatio||1;
+  c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);
+  const ctx=c.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width,h=r.height,pad=8,top=12,bottom=20;
+  const candles=getCandles(data);
+  let min=Math.min(...candles.map(v=>v.low)),max=Math.max(...candles.map(v=>v.high));
+  const spread=Math.max(1,max-min),low=min-spread*.12,high=max+spread*.12;
+  const plotH=h-top-bottom;
+  const y=v=>top+plotH*(1-(v-low)/(high-low));
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle=light?"#e0e7f0":"#26344a";ctx.lineWidth=1;
+  for(let i=0;i<5;i++){let gy=top+plotH*i/4;ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(w-pad,gy);ctx.stroke();}
+  const rising=data[data.length-1]>=data[0],color=rising?"#16c784":"#ea3943";
+  if(chartType==="candles"){
+    const step=(w-pad*2)/Math.max(1,candles.length);
+    const bodyW=Math.max(2,Math.min(9,step*.62));
+    candles.forEach((v,i)=>{
+      const x=pad+step*(i+.5),up=v.close>=v.open,col=up?"#16c784":"#ea3943";
+      ctx.strokeStyle=col;ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(x,y(v.high));ctx.lineTo(x,y(v.low));ctx.stroke();
+      const topY=Math.min(y(v.open),y(v.close)),bodyH=Math.max(1,Math.abs(y(v.open)-y(v.close)));
+      ctx.fillStyle=col;ctx.fillRect(x-bodyW/2,topY,bodyW,bodyH);
+    });
+  }else{
+    const pts=data.map((v,i)=>({x:pad+(w-pad*2)*i/(data.length-1),y:y(v)}));
+    const grad=ctx.createLinearGradient(0,top,0,h-bottom);
+    grad.addColorStop(0,rising?"rgba(22,199,132,.24)":"rgba(234,57,67,.22)");
+    grad.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.lineTo(pts[pts.length-1].x,h-bottom);ctx.lineTo(pts[0].x,h-bottom);ctx.closePath();
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.stroke();
+    const p=pts[pts.length-1];ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  }
+  ctx.fillStyle=light?"#627087":"#95a3b8";ctx.font="10px Arial";
+  ctx.fillText("START",pad,h-5);ctx.textAlign="right";ctx.fillText("NOW",w-pad,h-5);ctx.textAlign="left";
+}
+function drawCharts(){drawChart("homeChart",history);drawChart("marketChart",history);}
+function tick(){
+  const previous=btc;
+  btc=Math.max(1000,btc*(1+(Math.random()-.49)*.003));
+  eth=Math.max(100,eth*(1+(Math.random()-.49)*.002));
+  gold=Math.max(100,gold*(1+(Math.random()-.49)*.001));
+  history.push(btc);if(history.length>65)history.shift();
+  update();drawCharts();
+}
+window.addEventListener("resize",drawCharts);
+selectAmount(10000);update();requestAnimationFrame(drawCharts);
+setInterval(tick,1000);
+</script>
+</body>
+</html>
